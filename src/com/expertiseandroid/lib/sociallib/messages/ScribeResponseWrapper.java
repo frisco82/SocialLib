@@ -38,7 +38,9 @@ public class ScribeResponseWrapper implements ReadableResponse {
   public String getContents() {
     return response.getBody();
   }
-  
-  
 
+  public int getCode() {
+	return response.getCode();
+  }
+  
 }

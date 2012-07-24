@@ -28,10 +28,10 @@ import com.expertiseandroid.lib.sociallib.model.Post;
  * @author Expertise Android
  *
  */
-public class FacebookPost extends Post{
+public class FacebookPost extends Post
+{
   
   public String id;
-  public String message;
   public int likes;
   public List<FacebookComment> comments;
   
@@ -39,10 +39,6 @@ public class FacebookPost extends Post{
     comments = new ArrayList<FacebookComment>();
   }
 
-  @Override
-  public String getContents() {
-    return message;
-  }
 
   @Override
   public String getId() {
@@ -56,11 +52,6 @@ public class FacebookPost extends Post{
   @Override
   public void setId(String id) {
     this.id = id;
-  }
-
-  @Override
-  public void setContents(String content) {
-    message = content;
   }
 
 }

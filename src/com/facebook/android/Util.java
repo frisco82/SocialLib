@@ -16,15 +16,21 @@
 
 package com.facebook.android;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,6 +40,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+
+import com.expertiseandroid.lib.sociallib.messages.HttpResponseWrapper;
 
 
 /**
@@ -100,43 +108,31 @@ public final class Util {
      * @throws MalformedURLException - if the URL format is invalid
      * @throws IOException - if a network problem occurs
      */
-    public static String openUrl(String url, String method, Bundle params) 
+    public static HttpResponseWrapper openUrl(String url, String method, Bundle params) 
           throws MalformedURLException, IOException {
+    	
         if (method.equals("GET")) {
             url = url + "?" + encodeUrl(params);
         }
         Log.d("Facebook-Util", method + " URL: " + url);
-        HttpURLConnection conn = 
-            (HttpURLConnection) new URL(url).openConnection();
-        conn.setRequestProperty("User-Agent", System.getProperties().
+        HttpClient client = new DefaultHttpClient();
+        HttpRequestBase request;
+        if (method.equals("GET")) { 
+        	request = new HttpGet(url);
+        } else {
+        	HttpPost requestTemp = new HttpPost(url);
+        	ArrayList<NameValuePair> bodyParams = new ArrayList<NameValuePair>();
+        	for (String key : params.keySet()) {
+        		bodyParams.add(new BasicNameValuePair(key, params.getString(key)));
+        	}
+            requestTemp.setEntity(new UrlEncodedFormEntity(bodyParams, HTTP.UTF_8));
+            request = requestTemp;
+        }
+        request.setHeader("User-Agent", System.getProperties().
                 getProperty("http.agent") + " FacebookAndroidSDK");
-        if (!method.equals("GET")) {
-            // use method override
-            params.putString("method", method);
-            conn.setRequestMethod("POST");
-            conn.setDoOutput(true);
-            conn.getOutputStream().write(
-                    encodeUrl(params).getBytes("UTF-8"));
-        }
         Log.d("Encode", encodeUrl(params));
-        String response = "";
-        try {
-            response = read(conn.getInputStream());
-        } catch (FileNotFoundException e) {
-            // Error Stream contains JSON that we can parse to a FB error
-            response = read(conn.getErrorStream());
-        }
-        return response;
-    }
-
-    private static String read(InputStream in) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader r = new BufferedReader(new InputStreamReader(in), 1000);
-        for (String line = r.readLine(); line != null; line = r.readLine()) {
-            sb.append(line);
-        }
-        in.close();
-        return sb.toString();
+        HttpResponse response = client.execute(request);
+        return new HttpResponseWrapper(response);
     }
 
     public static void clearCookies(Context context) {

@@ -43,7 +43,6 @@ import com.expertiseandroid.lib.sociallib.connectors.interfaces.PhotoSocialNetwo
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.SignedCustomRequestSocialNetwork;
 import com.expertiseandroid.lib.sociallib.exceptions.NotAuthentifiedException;
 import com.expertiseandroid.lib.sociallib.messages.ReadableResponse;
-import com.expertiseandroid.lib.sociallib.messages.StringWrapper;
 import com.expertiseandroid.lib.sociallib.model.Post;
 import com.expertiseandroid.lib.sociallib.model.facebook.FacebookPost;
 import com.expertiseandroid.lib.sociallib.model.facebook.FacebookUser;
@@ -67,6 +66,9 @@ public class FacebookConnector implements FriendsSocialNetwork,
   private static final String ACCESS_TOKEN = "access_token";
   private static final String ENCODING = "UTF-8";
   private static final String MESSAGE = "message";
+  private static final String LINK = "link";
+  private static final String TITLE = "name";
+  private static final String DESCRIPTION = "description";  
   private static final String POST = "POST";
   private static final String CONNECTOR = "FacebookConnector";
   private static final String NETWORK = "Facebook";
@@ -107,8 +109,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
       IOException, JSONException, NotAuthentifiedException {
     if (!isAuthentified())
       throw new NotAuthentifiedException(NETWORK);
-    StringWrapper response = new StringWrapper(facebook.request(ME + GET_FRIENDS));
-    return reader.readUsers(response);
+    return reader.readUsers(facebook.request(ME + GET_FRIENDS));
   }
 
   public boolean authentify(Token accessToken) {
@@ -138,8 +139,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
    */
   public FacebookUser getUser(String identifier)
       throws MalformedURLException, IOException, JSONException {
-    StringWrapper response = new StringWrapper(facebook.request(identifier));
-    return reader.readUser(response);
+    return reader.readUser(facebook.request(identifier));
   }
 
   public boolean isAuthentified() {
@@ -148,7 +148,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
 
   public boolean logout(Context ctx) throws MalformedURLException,
       IOException, JSONException {
-    return reader.readResponse(new StringWrapper(facebook.logout(ctx)));
+    return reader.readResponse(facebook.logout(ctx));
   }
 
   public void requestAuthorization(Context ctx) {
@@ -169,16 +169,14 @@ public class FacebookConnector implements FriendsSocialNetwork,
     String id = post.getId();
     Bundle params = new Bundle();
     params.putString(MESSAGE, comment);
-    StringWrapper response = new StringWrapper(facebook.request(id + GET_COMMENTS, params, POST));
-    return reader.readResponse(response);
+    return reader.readResponse(facebook.request(id + GET_COMMENTS, params, POST));
   }
 
   public List<FacebookPost> getWallPosts() throws MalformedURLException,
       IOException, JSONException, NotAuthentifiedException {
     if (!isAuthentified())
       throw new NotAuthentifiedException(NETWORK);
-    StringWrapper response = new StringWrapper(facebook.request(ME + GET_FEED));
-    return reader.readPosts(response);
+    return reader.readPosts(facebook.request(ME + GET_FEED));
   }
 
   /**
@@ -193,8 +191,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
       IOException, JSONException, NotAuthentifiedException {
     if (!isAuthentified())
       throw new NotAuthentifiedException(NETWORK);
-    StringWrapper response = new StringWrapper(facebook.request(ME + GET_HOME));
-    return reader.readPosts(response);
+    return reader.readPosts(facebook.request(ME + GET_HOME));
   }
 
   /**
@@ -207,8 +204,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
    */
   public List<FacebookPost> getWallPosts(FacebookUser user)
       throws MalformedURLException, IOException, JSONException {
-    StringWrapper response = new StringWrapper(facebook.request(String.valueOf(user.id) + GET_FEED));
-    return reader.readPosts(response);
+    return reader.readPosts(facebook.request(String.valueOf(user.id) + GET_FEED));
   }
 
   public boolean post(Post content) throws FileNotFoundException,
@@ -216,9 +212,15 @@ public class FacebookConnector implements FriendsSocialNetwork,
     if (!isAuthentified())
       throw new NotAuthentifiedException(NETWORK);
     Bundle params = new Bundle();
-    params.putString(MESSAGE, content.getContents());
-    StringWrapper response = new StringWrapper(facebook.request(ME + GET_FEED, params, POST));
-    return reader.readResponse(response);
+    if (content.type == Post.PostType.link) {
+        params.putString(LINK, content.getLink());
+        params.putString(DESCRIPTION, content.getContents());
+        params.putString(TITLE, content.getTitle());        
+    } else {
+        params.putString(MESSAGE, content.getContents());
+    	
+    }
+    return reader.readResponse(facebook.request(ME + GET_FEED, params, POST));
   }
 
   /**
@@ -239,8 +241,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
       throw new NotAuthentifiedException(NETWORK);
     Bundle params = new Bundle();
     params.putString(MESSAGE, content.getContents());
-    StringWrapper response = new StringWrapper(facebook.request(String.valueOf(user.id) + GET_FEED, params, POST));
-    return reader.readResponse(response);
+    return reader.readResponse(facebook.request(String.valueOf(user.id) + GET_FEED, params, POST));
   }
 
   public boolean like(Post post) throws FileNotFoundException,
@@ -248,8 +249,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
     if (!isAuthentified())
       throw new NotAuthentifiedException(NETWORK);
     String id = post.getId();
-    StringWrapper response = new StringWrapper(facebook.request(id + GET_LIKES, new Bundle(), POST));
-    return reader.readResponse(response);
+    return reader.readResponse(facebook.request(id + GET_LIKES, new Bundle(), POST));
   }
 
   /**
@@ -297,7 +297,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
       NotAuthentifiedException {
     if (!isAuthentified())
       throw new NotAuthentifiedException(NETWORK);
-    return new StringWrapper(facebook.request(request, Utils.stringMapToBundle(bodyParams), httpMethod));
+    return facebook.request(request, Utils.stringMapToBundle(bodyParams), httpMethod);
   }
 
   public ReadableResponse customRequest(String httpMethod, String request) throws FileNotFoundException, MalformedURLException, IOException {
@@ -306,7 +306,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
 
   public ReadableResponse customRequest(String httpMethod, String request,
       Map<String, String> bodyParams) throws FileNotFoundException, MalformedURLException, IOException {
-    return new StringWrapper(facebook.request(request, Utils.stringMapToBundle(bodyParams), httpMethod));
+    return facebook.request(request, Utils.stringMapToBundle(bodyParams), httpMethod);
   }
 
   public boolean sendPhoto(String filePath, String caption)
@@ -331,9 +331,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
     params.put(MESSAGE, caption);
 
     String url = GRAPH_URL + albumId + GET_PHOTOS;
-    ReadableResponse response = new StringWrapper(Utils.postWithAttachment(
-        url, params, image));
-    return reader.readResponse(response);
+    return reader.readResponse(Utils.postWithAttachment(url, params, image));
   }
   
   /**

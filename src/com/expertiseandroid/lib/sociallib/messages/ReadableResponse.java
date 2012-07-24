@@ -28,4 +28,5 @@ public interface ReadableResponse {
    * @return a string representation of the response
    */
   public String getContents();
+  public int getCode();
 }

@@ -16,17 +16,10 @@
 
 package com.expertiseandroid.lib.sociallib.utils;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +47,9 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.protocol.HTTP;
@@ -215,40 +211,29 @@ public class Utils {
    * @return the response
    * @throws IOException
    */
-  public static String postWithAttachment(String url, Map<String, String> params, Object attachment) throws IOException{
-    String boundary = generateBoundaryString(10);
-    URL servUrl = new URL(url);
-    HttpURLConnection conn = (HttpURLConnection)servUrl.openConnection();
-    conn.setRequestProperty("User-Agent", System.getProperties().getProperty("http.agent") + SOCIALLIB);
-    conn.setRequestMethod("POST");
-    String contentType = "multipart/form-data; boundary=" + boundary;
-    conn.setRequestProperty("Content-Type", contentType);
-
-    byte[] body = generatePostBody(params, attachment, boundary);
-
-    conn.setDoOutput(true);
-    conn.connect();
-    OutputStream out = conn.getOutputStream();
-    out.write(body);
-    InputStream is = null;
-    try {
-      is = conn.getInputStream();
-    } catch (FileNotFoundException e) {
-      is = conn.getErrorStream();
-    }catch (Exception e){
-      int statusCode = conn.getResponseCode();
-      Log.e("Response code", ""+statusCode);
-      return conn.getResponseMessage();
-    }
-
-    BufferedReader r = new BufferedReader(new InputStreamReader(is));
-    StringBuilder sb = new StringBuilder();
-    String l;
-    while((l=r.readLine())!=null) sb.append(l).append('\n');
-    out.close();
-    is.close();
-    if(conn!=null) conn.disconnect();
-    return sb.toString();
+  public static HttpResponseWrapper postWithAttachment(String url, Map<String, String> params, Object attachment) throws IOException{
+	  HttpClient client = new DefaultHttpClient();  
+	  HttpPost post = new HttpPost(url); 
+	  MultipartEntity reqEntity = new MultipartEntity();
+	  for (String key : params.keySet()) {
+		  StringBody param = new StringBody(params.get(key));
+		  reqEntity.addPart(key, param);
+	  }
+      if (attachment instanceof Bitmap) {
+          Bitmap image = (Bitmap) attachment;
+          ByteArrayOutputStream stream = new ByteArrayOutputStream();
+          image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+          byte[] byteArray = stream.toByteArray();
+    	  ByteArrayBody bin = new ByteArrayBody(byteArray, "image/png", "photo");
+    	  reqEntity.addPart("photo", bin);  
+      } else if (attachment instanceof byte[]) {
+    	  ByteArrayBody bin = new ByteArrayBody((byte[])attachment, "data");
+    	  reqEntity.addPart("data", bin);  
+      }
+	  post.setEntity(reqEntity);
+	  post.setHeader("User-Agent", System.getProperties().getProperty("http.agent") + SOCIALLIB);
+	  HttpResponse response = client.execute(post);  
+	  return new HttpResponseWrapper(response);
   }
 
   /**
@@ -297,51 +282,6 @@ public class Utils {
     return sb.toString();
   }
 
-  private static byte[] generatePostBody(Map<String, String> params, Object attachment, String boundary) throws UnsupportedEncodingException, IOException{
-
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    String bodyString = "--" + boundary + "\r\n";
-    String endLine = "\r\n--" + boundary + "\r\n";
-
-    os.write(bodyString.getBytes(ENCODING));
-
-    for (Entry<String, String> entry : params.entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
-
-      String cd = "Content-Disposition: form-data; name=\"" + key + "\"\r\n\r\n";
-
-      os.write(cd.getBytes(ENCODING));
-      os.write(value.getBytes(ENCODING));
-      os.write(endLine.getBytes(ENCODING));
-    }
-
-    // write a bitmap value, if one exists
-    if (attachment != null) {
-      if (attachment instanceof Bitmap) {
-        String cd = "Content-Disposition: form-data; filename=\"photo\"\r\n";
-        String ct = "Content-Type: image/png\r\n\r\n";
-        Bitmap image = (Bitmap) attachment;
-
-        os.write(cd.getBytes(ENCODING));
-        os.write(ct.getBytes(ENCODING));
-        image.compress(Bitmap.CompressFormat.PNG, 0, os);
-        os.write(endLine.getBytes(ENCODING));
-
-      } else if (attachment instanceof byte[]) {
-        String cd = "Content-Disposition: form-data; filename=\"data\"\r\n";
-        String ct = "Content-Type: content/unknown\r\n\r\n";
-        byte[] data = (byte[]) attachment;
-
-        os.write(cd.getBytes(ENCODING));
-        os.write(ct.getBytes(ENCODING));
-        os.write(data);
-        os.write(endLine.getBytes(ENCODING));
-      }
-    }
-
-    return os.toByteArray();
-  }
 
   private static byte[] generatePostBody2(Map<String, String> params, Object attachment, String boundary) throws UnsupportedEncodingException, IOException{
 

@@ -54,6 +54,10 @@ public class HttpResponseWrapper implements ReadableResponse{
     
     return sb.toString();
   }
+
+  public int getCode() {
+	return response.getStatusLine().getStatusCode();
+  }
   
   
 }

@@ -28,6 +28,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.CookieSyncManager;
 
+import com.expertiseandroid.lib.sociallib.messages.HttpResponseWrapper;
+
 /**
  * Main Facebook object for interacting with the Facebook developer API.
  * Provides methods to log in and log out a user, make requests using the REST
@@ -160,12 +162,12 @@ public class Facebook {
      * @return JSON string representation of the auth.expireSession response 
      *            ("true" if successful)
      */
-    public String logout(Context context) 
+    public HttpResponseWrapper logout(Context context) 
           throws MalformedURLException, IOException {
         Util.clearCookies(context);
         Bundle b = new Bundle();
         b.putString("method", "auth.expireSession");
-        String response = request(b);
+        HttpResponseWrapper response = request(b);
         setAccessToken(null);
         setAccessExpires(0);
         return response;
@@ -199,7 +201,7 @@ public class Facebook {
      *            if one of the parameters is not "method"
      * @return JSON string representation of the response
      */
-    public String request(Bundle parameters) 
+    public HttpResponseWrapper request(Bundle parameters) 
           throws MalformedURLException, IOException {
         if (!parameters.containsKey("method")) {
             throw new IllegalArgumentException("API method must be specified. "
@@ -225,7 +227,7 @@ public class Facebook {
      * @throws MalformedURLException
      * @return JSON string representation of the response
      */
-    public String request(String graphPath) 
+    public HttpResponseWrapper request(String graphPath) 
           throws MalformedURLException, IOException {
         return request(graphPath, new Bundle(), "GET");
     }
@@ -252,7 +254,7 @@ public class Facebook {
      * @throws MalformedURLException 
      * @return JSON string representation of the response
      */
-    public String request(String graphPath, Bundle parameters) 
+    public HttpResponseWrapper request(String graphPath, Bundle parameters) 
           throws MalformedURLException, IOException {
         return request(graphPath, parameters, "GET");
     }
@@ -282,7 +284,7 @@ public class Facebook {
      * @throws MalformedURLException 
      * @return JSON string representation of the response
      */
-    public String request(String graphPath,
+    public HttpResponseWrapper request(String graphPath,
                           Bundle parameters, 
                           String httpMethod) 
           throws FileNotFoundException, MalformedURLException, IOException {

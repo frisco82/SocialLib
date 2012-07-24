@@ -34,6 +34,12 @@ public abstract class Post {
   public User author;
   public Date date;
   
+  public String message;
+  public String link;
+  public String imagePath;
+  public String title;
+  
+  
   protected void construct(PostType type, User author, Date date){
     this.type = type;
     this.author = author;
@@ -44,7 +50,21 @@ public abstract class Post {
    * Access to the contents of the post
    * @return a string representation of the contents
    */
-  public abstract String getContents();
+  public String getContents() {
+	  return this.message;
+  }
+  
+  public String getLink() {
+	  return this.link;
+  }
+  
+  public String getImage() {
+	  return this.imagePath;
+  }
+  
+  public String getTitle() {
+	  return this.title;
+  }
   
   /**
    * Access the post's id
@@ -62,6 +82,20 @@ public abstract class Post {
    * Sets the post's contents
    * @param content a string representation of the contents
    */
-  public abstract void setContents(String content);
+  public void setContents(String content) {
+	  this.message = content;
+  }
+
+  public void setLink(String link) {
+	  this.link = link;
+  }
+  
+  public void setImage(String path) {
+	  this.imagePath = path;
+  }
+
+  public void setTitle(String title) {
+	  this.title = title;
+  }
 
 }

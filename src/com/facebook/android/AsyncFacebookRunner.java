@@ -20,6 +20,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
+import com.expertiseandroid.lib.sociallib.messages.HttpResponseWrapper;
+
 import android.content.Context;
 import android.os.Bundle;
 
@@ -73,8 +75,8 @@ public class AsyncFacebookRunner {
         new Thread() {
             @Override public void run() {
                 try {
-                    String response = fb.logout(context);
-                    if (response.length() == 0 || response.equals("false")){
+                    HttpResponseWrapper response = fb.logout(context);
+                    if (response.getCode() != 200 || response.getContents() == "false"){
                         listener.onFacebookError(new FacebookError(
                                 "auth.expireSession failed"));
                         return;
@@ -206,8 +208,7 @@ public class AsyncFacebookRunner {
         new Thread() {
             @Override public void run() {
                 try {
-                    String resp = fb.request(graphPath, parameters, httpMethod);
-                    listener.onComplete(resp);
+                    listener.onComplete(fb.request(graphPath, parameters, httpMethod));
                 } catch (FileNotFoundException e) {
                     listener.onFileNotFoundException(e);
                 } catch (MalformedURLException e) {
@@ -231,7 +232,7 @@ public class AsyncFacebookRunner {
          * 
          * Executed by a background thread: do not update the UI in this method.
          */
-        public void onComplete(String response);
+        public void onComplete(HttpResponseWrapper response);
 
         /**
          * Called when a request has a network or request error.
