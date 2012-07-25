@@ -51,15 +51,17 @@ import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 
+import com.espertiseandroid.lib.sociallib.webview.DialogListener;
+import com.espertiseandroid.lib.sociallib.webview.SocialLibDialog;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.FollowersSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.PostsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.SignedCustomRequestSocialNetwork;
 import com.expertiseandroid.lib.sociallib.exceptions.NotAuthentifiedException;
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.messages.HttpResponseWrapper;
 import com.expertiseandroid.lib.sociallib.messages.ReadableResponse;
 import com.expertiseandroid.lib.sociallib.messages.ScribeResponseWrapper;
@@ -75,6 +77,9 @@ import com.expertiseandroid.lib.sociallib.utils.Utils;
  *
  */
 public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetwork, SignedCustomRequestSocialNetwork{
+	
+	public final static String TAG = TwitterConnector.class.getSimpleName();
+
 
   private static final String GET_USER = "http://api.twitter.com/1/account/verify_credentials.xml";
   private static final String GET_FOLLOWERS = "http://api.twitter.com/1/statuses/followers.xml";
@@ -212,8 +217,9 @@ public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetw
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean tweet(String tweet) throws SAXException, ParserConfigurationException, IOException, NotAuthentifiedException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException{
+  public boolean tweet(String tweet) throws SAXException, ParserConfigurationException, IOException, NotAuthentifiedException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException{
     if(!isAuthentified()) throw new NotAuthentifiedException(NETWORK);
     List<NameValuePair> bodyParams = new ArrayList<NameValuePair>();
     bodyParams.add(new BasicNameValuePair(STATUS, tweet));
@@ -232,8 +238,9 @@ public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetw
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean retweet(String id) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException{
+  public boolean retweet(String id) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException{
     if(!isAuthentified()) throw new NotAuthentifiedException(NETWORK);
     ReadableResponse response = signedPostRequest(POST_RETWEET + id + DOTXML, new ArrayList<NameValuePair>());
     return reader.readResponse(response);
@@ -250,12 +257,13 @@ public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetw
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean retweet(Post tweet) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException{
+  public boolean retweet(Post tweet) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException{
     return retweet(tweet.getId());
   }
   
-  public boolean post(Post content) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+  public boolean post(Post content) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException {
     return tweet(content.getContents());
   }
 
@@ -283,19 +291,19 @@ public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetw
   }
 
 
-  public void requestAuthorization(Context ctx) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+  public void requestAuthorization(Activity ctx, DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
     String authUrl = httpOauthprovider.retrieveRequestToken(httpOauthConsumer, callback);
-    ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
+    new SocialLibDialog(ctx, authUrl, listener, callback).show();
   }
 
-  public void authorize(Activity ctx) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException{
-    String verifier = ctx.getIntent().getData().getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
+  public void authorize(String url) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException{
+    String verifier = Uri.parse(url).getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
     httpOauthprovider.retrieveAccessToken(httpOauthConsumer, verifier);
     accessToken = new Token(httpOauthConsumer.getToken(), httpOauthConsumer.getTokenSecret());
     authentified = true;
   }
 
-  public boolean logout(Context ctx) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException {
+  public boolean logout(Context ctx) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException {
     if(!isAuthentified()) throw new NotAuthentifiedException(NETWORK);
     ReadableResponse response = signedPostRequest(LOGOUT, new ArrayList<NameValuePair>());
     return reader.readResponse(response);
@@ -397,8 +405,9 @@ public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetw
    * @throws ParserConfigurationException
    * @throws IOException
    * @throws NotAuthentifiedException
+ * @throws OperationException 
    */
-  public boolean sendPhotoAndTweet(String tweet, String filePath, String caption) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, UnsupportedEncodingException, SAXException, ParserConfigurationException, IOException, NotAuthentifiedException{
+  public boolean sendPhotoAndTweet(String tweet, String filePath, String caption) throws OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, UnsupportedEncodingException, SAXException, ParserConfigurationException, IOException, NotAuthentifiedException, OperationException{
     return tweet(tweet + ' ' + sendPhoto(filePath, caption));
   }
 }

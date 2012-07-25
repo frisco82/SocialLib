@@ -44,9 +44,10 @@ import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 
+import com.espertiseandroid.lib.sociallib.webview.DialogListener;
+import com.espertiseandroid.lib.sociallib.webview.SocialLibDialog;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.CommentedPostsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.FollowersSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.LikedPostsSocialNetwork;
@@ -133,8 +134,8 @@ public class BuzzConnector implements FollowersSocialNetwork, CommentedPostsSoci
     return true;
   }
 
-  public void authorize(Activity ctx) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
-    String verifier = ctx.getIntent().getData().getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
+  public void authorize(String url) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+    String verifier = Uri.parse(url).getQueryParameter(oauth.signpost.OAuth.OAUTH_VERIFIER);
     httpOauthprovider.retrieveAccessToken(httpOauthConsumer, verifier);
     accessToken = new Token(httpOauthConsumer.getToken(), httpOauthConsumer.getTokenSecret());
     authentified = true;
@@ -158,10 +159,9 @@ public class BuzzConnector implements FollowersSocialNetwork, CommentedPostsSoci
     return false;
   }
 
-  public void requestAuthorization(Context ctx) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+  public void requestAuthorization(Activity ctx, DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
     String authUrl = httpOauthprovider.retrieveRequestToken(httpOauthConsumer, callback);
-    ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)));
-
+    new SocialLibDialog(ctx, authUrl, listener, callback).show();
   }
 
   public boolean comment(Post post, Post comment) throws FileNotFoundException, MalformedURLException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, IOException, NotAuthentifiedException, JSONException {

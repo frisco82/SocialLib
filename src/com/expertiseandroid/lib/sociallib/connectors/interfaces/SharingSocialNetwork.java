@@ -31,6 +31,7 @@ import org.json.JSONException;
 import org.xml.sax.SAXException;
 
 import com.expertiseandroid.lib.sociallib.exceptions.NotAuthentifiedException;
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.model.Post;
 
 /**
@@ -54,6 +55,7 @@ public interface SharingSocialNetwork {
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean post(Post content) throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, JSONException, SAXException, ParserConfigurationException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException;
+  public boolean post(Post content) throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, JSONException, SAXException, ParserConfigurationException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException;
 }

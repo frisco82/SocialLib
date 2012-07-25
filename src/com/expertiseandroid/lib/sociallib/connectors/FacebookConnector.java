@@ -36,6 +36,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.espertiseandroid.lib.sociallib.webview.DialogListener;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.CommentedPostsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.FriendsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.LikedPostsSocialNetwork;
@@ -83,14 +84,12 @@ public class FacebookConnector implements FriendsSocialNetwork,
   private static final String GET_COMMENTS = "/comments";
 
   public FacebookReader reader;
-  private String appId;
   public String[] permissions;
   private Facebook facebook;
   public Facebook.DialogListener fbListener;
 
   protected FacebookConnector(String appId, String[] permissions) {
-    this.facebook = new Facebook();
-    this.appId = appId;
+    this.facebook = new Facebook(appId);
     this.permissions = permissions;
     this.reader = new FacebookReader();
     this.fbListener = new EmptyListener();
@@ -98,8 +97,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
 
   protected FacebookConnector(String appId, String[] permissions,
       Facebook.DialogListener fbListener) {
-    this.facebook = new Facebook();
-    this.appId = appId;
+    this.facebook = new Facebook(appId);
     this.permissions = permissions;
     this.reader = new FacebookReader();
     this.fbListener = fbListener;
@@ -117,7 +115,7 @@ public class FacebookConnector implements FriendsSocialNetwork,
     return facebook.isSessionValid();
   }
 
-  public void authorize(Activity ctx) {
+  public void authorize(String url) {
     Log.w(CONNECTOR,"FacebookConnector doesn't need the authorize step to be explicitly called");
   }
 
@@ -151,8 +149,8 @@ public class FacebookConnector implements FriendsSocialNetwork,
     return reader.readResponse(facebook.logout(ctx));
   }
 
-  public void requestAuthorization(Context ctx) {
-    facebook.authorize(ctx, appId, permissions, fbListener);
+  public void requestAuthorization(Activity ctx, DialogListener listener) {
+    facebook.authorize(ctx, permissions, Facebook.FORCE_DIALOG_AUTH, fbListener);
   }
 
   public boolean comment(Post post, Post comment)

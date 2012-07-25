@@ -24,7 +24,6 @@ import org.json.JSONException;
 import com.expertiseandroid.lib.sociallib.messages.ReadableResponse;
 import com.expertiseandroid.lib.sociallib.model.facebook.FacebookPost;
 import com.expertiseandroid.lib.sociallib.model.facebook.FacebookUser;
-import com.expertiseandroid.lib.sociallib.model.linkedin.LinkedInUser;
 import com.expertiseandroid.lib.sociallib.parser.rules.facebook.FacebookParsingPosts;
 import com.expertiseandroid.lib.sociallib.parser.rules.facebook.FacebookParsingResponse;
 import com.expertiseandroid.lib.sociallib.parser.rules.facebook.FacebookParsingSingleUser;
@@ -85,7 +84,8 @@ public class FacebookReader{
 	  
 	  @SuppressWarnings("unchecked")
 	  List<String> list = (List<String>) Utils.parseJSON(response, new FacebookParsingResponse());
-	  return list.get(0).equals("true");
+	  if(list.size()==1) return list.get(0).equals("true");
+	  else return false;
   }
   
   

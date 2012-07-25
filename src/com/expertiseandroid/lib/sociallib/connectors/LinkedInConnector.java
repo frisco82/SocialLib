@@ -35,9 +35,10 @@ import org.xml.sax.SAXException;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 
+import com.espertiseandroid.lib.sociallib.webview.DialogListener;
+import com.espertiseandroid.lib.sociallib.webview.SocialLibDialog;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.CommentedPostsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.FriendsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.PostsSocialNetwork;
@@ -86,12 +87,13 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
   private Token requestToken;
   public Token accessToken;
   private boolean authentified;
+  private String mCallback;
   
   protected LinkedInConnector(String consumerKey, String consumerSecret, String callback){
     this.authentified = false;
     this.scribe = ScribeFactory.getLinkedInScribe(consumerKey, consumerSecret, callback);
     this.reader = new LinkedInReader();
-    
+    this.mCallback = callback;    
   }
 
   public List<LinkedInUser> getFriends() throws SAXException, ParserConfigurationException, IOException, NotAuthentifiedException {
@@ -107,9 +109,8 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
     return true;
   }
 
-  public void authorize(Activity ctx) {
-    Map<String, String> params = Utils.decodeUri(ctx.getIntent().getData().toString());
-    String verifier = params.get(OAUTH_VERIFIER);
+  public void authorize(String url) {
+	String verifier = Uri.parse(url).getQueryParameter(OAUTH_VERIFIER);
     accessToken = scribe.getAccessToken(requestToken, verifier);
     authentified = true;
   }
@@ -149,10 +150,10 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
     return reader.readResponse(response);
   }
 
-  public void requestAuthorization(Context ctx) {
+  public void requestAuthorization(Activity ctx, DialogListener listener) {
     requestToken = scribe.getRequestToken();
     String url = AUTHORIZE + requestToken.getToken();
-    ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    new SocialLibDialog(ctx, url, listener, mCallback).show();
   }
   
   public List<LinkedInPost> getStatusUpdates(int start, int count) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException{
@@ -256,6 +257,4 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
     Utils.addBodyParams(rObj, bodyParams);
     return new ScribeResponseWrapper(rObj.send());
   }
-
-
 }

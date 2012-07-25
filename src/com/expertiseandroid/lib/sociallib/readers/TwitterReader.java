@@ -23,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.messages.ReadableResponse;
 import com.expertiseandroid.lib.sociallib.model.twitter.TwitterStatus;
 import com.expertiseandroid.lib.sociallib.model.twitter.TwitterUser;
@@ -90,9 +91,21 @@ public class TwitterReader{
    * @throws SAXException
    * @throws ParserConfigurationException
    * @throws IOException
+ * @throws OperationException 
    */
-  public boolean readResponse(ReadableResponse response) throws SAXException, ParserConfigurationException, IOException{
-    return (Boolean) Utils.parseXML(response, new TwitterParsingResponse());
+  @SuppressWarnings("unchecked")
+public boolean readResponse(ReadableResponse response) throws SAXException, ParserConfigurationException, IOException, OperationException{
+	List<String> list = (List<String>)Utils.parseXML(response, new TwitterParsingResponse());
+    if(list.size()==1) {
+    	if (list.get(0).equals("true")) {
+    		return true;
+    	} else if (list.get(0).equals("false")) {
+    		return false;
+    	} else {
+    		throw new OperationException(list.get(0));
+    	}
+    }
+    return false;
   }
   
   /**
@@ -103,8 +116,11 @@ public class TwitterReader{
    * @throws ParserConfigurationException
    * @throws IOException
    */
-  public String readUrl(ReadableResponse response) throws SAXException, ParserConfigurationException, IOException{
-    return (String) Utils.parseXML(response, new TwitterParsingUrl());
+  @SuppressWarnings("unchecked")
+public String readUrl(ReadableResponse response) throws SAXException, ParserConfigurationException, IOException{
+	List<String> list = (List<String>) Utils.parseXML(response, new TwitterParsingUrl());
+    if(list.size()==1) return list.get(0);
+    return null;
   }
 
 

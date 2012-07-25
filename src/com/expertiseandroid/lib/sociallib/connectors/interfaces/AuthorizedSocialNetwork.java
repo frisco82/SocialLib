@@ -36,7 +36,9 @@ import org.xml.sax.SAXException;
 import android.app.Activity;
 import android.content.Context;
 
+import com.espertiseandroid.lib.sociallib.webview.DialogListener;
 import com.expertiseandroid.lib.sociallib.exceptions.NotAuthentifiedException;
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.model.User;
 
 /**
@@ -54,7 +56,7 @@ public interface AuthorizedSocialNetwork extends SocialNetwork {
    * @throws OAuthNotAuthorizedException 
    * @throws OAuthMessageSignerException 
    */
-  public void requestAuthorization(Context ctx) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException;
+  public void requestAuthorization(Activity ctx, DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException;
   
   /**
    * Auhtorizes the application to access the user's data
@@ -64,7 +66,7 @@ public interface AuthorizedSocialNetwork extends SocialNetwork {
    * @throws OAuthNotAuthorizedException 
    * @throws OAuthMessageSignerException 
    */
-  public void authorize(Activity ctx) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException;
+  public void authorize(String url) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException;
   
   /**
    * Logs out the application from the social network
@@ -79,8 +81,9 @@ public interface AuthorizedSocialNetwork extends SocialNetwork {
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean logout(Context ctx) throws MalformedURLException, IOException, JSONException, SAXException, ParserConfigurationException, NotAuthentifiedException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException;
+  public boolean logout(Context ctx) throws MalformedURLException, IOException, JSONException, SAXException, ParserConfigurationException, NotAuthentifiedException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException;
   
   /**
    * 
