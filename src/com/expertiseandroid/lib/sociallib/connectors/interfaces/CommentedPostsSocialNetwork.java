@@ -31,6 +31,7 @@ import org.json.JSONException;
 import org.xml.sax.SAXException;
 
 import com.expertiseandroid.lib.sociallib.exceptions.NotAuthentifiedException;
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.model.Post;
 
 /**
@@ -55,8 +56,9 @@ public interface CommentedPostsSocialNetwork extends PostsSocialNetwork{
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean comment(Post post, Post comment) throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, JSONException, SAXException, ParserConfigurationException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException;
+  public boolean comment(Post post, Post comment) throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, JSONException, SAXException, ParserConfigurationException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException;
   
   /**
    * Comment on a post
@@ -73,6 +75,7 @@ public interface CommentedPostsSocialNetwork extends PostsSocialNetwork{
    * @throws OAuthCommunicationException 
    * @throws OAuthExpectationFailedException 
    * @throws OAuthMessageSignerException 
+ * @throws OperationException 
    */
-  public boolean comment(Post post, String comment) throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, JSONException, SAXException, ParserConfigurationException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException;
+  public boolean comment(Post post, String comment) throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, JSONException, SAXException, ParserConfigurationException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, OperationException;
 }

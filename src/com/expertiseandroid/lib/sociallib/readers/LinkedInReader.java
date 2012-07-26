@@ -23,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.messages.ReadableResponse;
 import com.expertiseandroid.lib.sociallib.model.linkedin.LinkedInConnectionPost;
 import com.expertiseandroid.lib.sociallib.model.linkedin.LinkedInPost;
@@ -103,7 +104,7 @@ public class LinkedInReader{
    * @throws ParserConfigurationException
    * @throws IOException
    */
-  public boolean readResponse(ReadableResponse response) throws SAXException, ParserConfigurationException, IOException{
+  public boolean readResponse(ReadableResponse response) throws SAXException, ParserConfigurationException, IOException, OperationException{
     return true;
   }
 }

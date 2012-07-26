@@ -44,6 +44,7 @@ import com.expertiseandroid.lib.sociallib.connectors.interfaces.FriendsSocialNet
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.PostsSocialNetwork;
 import com.expertiseandroid.lib.sociallib.connectors.interfaces.SignedCustomRequestSocialNetwork;
 import com.expertiseandroid.lib.sociallib.exceptions.NotAuthentifiedException;
+import com.expertiseandroid.lib.sociallib.exceptions.OperationException;
 import com.expertiseandroid.lib.sociallib.messages.ReadableResponse;
 import com.expertiseandroid.lib.sociallib.messages.ScribeResponseWrapper;
 import com.expertiseandroid.lib.sociallib.model.Post;
@@ -69,11 +70,9 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
   private static final String AUTHORIZE = "https://api.linkedin.com/uas/oauth/authorize?oauth_token=";
   private static final String API_PATH = "https://api.linkedin.com/v1";
   private static final String INVALIDATE = "https://api.linkedin.com/uas/oauth/invalidateToken";
-  private static final String CURRENT_STATUS = "current-status";
   private static final String OAUTH_VERIFIER = "oauth_verifier";
   private static final String PEOPLE = "/people";
-  private static final String STATUS = "/current-status";
-  private static final String COMMENT2 = "comment";
+  private static final String SHARES = "http://api.linkedin.com/v1/people/~/shares";
   private static final String UPDATE_COMMENT = "update-comment";
   private static final String UPDATE_COMMENTS = "/update-comments";
   private static final String CONNECTIONS_FIELD = ":(connections)";
@@ -81,6 +80,19 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
   private static final String ID = "/id=";
   private static final String DEF_FIELDS = ":(id,first-name,last-name,industry,headline,distance,current-status,num-connections,summary)";
   private static final String NETWORK = "LinkedIn";
+  
+  private static final String COMMENT = "comment";
+  private static final String TITLE = "title";
+  private static final String LINK = "submitted-url";
+  private static final String DESCRIPTION = "description";
+  private static final String CODE = "code";
+  private static final String SHARE = "share";
+  private static final String CONTENT  = "content";
+  private static final String VISIBILITY  = "visibility";
+  private static final String VISIBILITY_VALUE  = "anyone";
+   
+  
+   
   
   public LinkedInReader reader;
   private Scribe scribe;
@@ -106,6 +118,7 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
 
   public boolean authentify(Token accessToken) {
     this.accessToken = accessToken;
+    this.authentified = true;
     return true;
   }
 
@@ -143,7 +156,7 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
     return authentified;
   }
 
-  public boolean logout(Context ctx) throws SAXException, ParserConfigurationException, IOException {
+  public boolean logout(Context ctx) throws SAXException, ParserConfigurationException, IOException, OperationException {
     Request request = new Request(Verb.GET, INVALIDATE);
     scribe.signRequest(request, accessToken);
     ReadableResponse response = new ScribeResponseWrapper(request.send());
@@ -188,43 +201,51 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
     return reader.readPosts(response);
   }
 
-  public boolean post(Post content) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException {
-    return post(content.getContents());
-  }
-
-  /**
-   * Posts a status
-   * @param status
-   * @return true if the operation was successful
-   * @throws NotAuthentifiedException
-   * @throws SAXException
-   * @throws ParserConfigurationException
-   * @throws IOException
-   */
-  public boolean post(String status) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException{
-    if(!isAuthentified()) throw new NotAuthentifiedException(NETWORK);
-    Request request = new Request(Verb.PUT, API_PATH + PEOPLE + ME + STATUS);
-    scribe.signRequest(request, accessToken);
-    Map<String,String> params = new HashMap<String, String>();
-    params.put(CURRENT_STATUS, status);
-    request.addPayload(Utils.generateXML(params));
-    ReadableResponse response = new ScribeResponseWrapper(request.send());
-    return reader.readResponse(response);
+  public boolean post(Post content) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OperationException {
+	    if(!isAuthentified()) throw new NotAuthentifiedException(NETWORK);
+	    Request request = new Request(Verb.POST, SHARES);
+	    scribe.signRequest(request, accessToken);
+	    Map<String,Object> params = new HashMap<String, Object>();
+	    Map<String,Object> shareParams = new HashMap<String, Object>();
+	    params.put(SHARE, shareParams);
+	    if (content.type == Post.PostType.link) {
+		    Map<String,Object> contentParams = new HashMap<String, Object>();
+	    	shareParams.put(CONTENT, contentParams);
+	    	contentParams.put(TITLE, content.getTitle());
+	    	contentParams.put(LINK, content.getLink());
+	    	contentParams.put(DESCRIPTION, content.getContents());
+	    } else {
+		    shareParams.put(COMMENT, content.getContents());
+	    }
+	    Map<String,Object> visibilityParams = new HashMap<String, Object>();
+	    shareParams.put(VISIBILITY, visibilityParams);
+	    visibilityParams.put(CODE, VISIBILITY_VALUE);
+	    String payload = Utils.generateXML(params);
+	    request.addPayload(payload);
+	    request.addHeader("Content-Length", Integer.toString(payload.length()));  
+	    request.addHeader("Content-Type", "text/xml"); 
+	    ReadableResponse response = new ScribeResponseWrapper(request.send());
+	    return reader.readResponse(response);
   }
 
   public boolean comment(Post post, Post comment)
-      throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, SAXException, ParserConfigurationException {
+      throws FileNotFoundException, MalformedURLException, IOException, NotAuthentifiedException, SAXException, ParserConfigurationException, OperationException {
     return comment(post, comment.getContents());
   }
   
 
-  public boolean comment(Post post, String comment) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException{
+  public boolean comment(Post post, String comment) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException, OperationException{
     if(!isAuthentified()) throw new NotAuthentifiedException(NETWORK);
     Request request = new Request(Verb.POST, POST_COMMENT + post.getId() + UPDATE_COMMENTS);
     scribe.signRequest(request, accessToken);
-    Map<String,String> params = new HashMap<String, String>();
-    params.put(COMMENT2, comment);
-    request.addPayload(Utils.generateXML(params, UPDATE_COMMENT));
+    Map<String,Object> params = new HashMap<String, Object>();
+    Map<String,Object> updateParams = new HashMap<String, Object>();
+    params.put(UPDATE_COMMENT, updateParams);
+    updateParams.put(COMMENT, comment);
+    String payload = Utils.generateXML(params);
+    request.addPayload(payload);
+    request.addHeader("Content-Length", Integer.toString(payload.length()));  
+    request.addHeader("Content-Type", "text/xml"); 
     ReadableResponse response = new ScribeResponseWrapper(request.send());
     return reader.readResponse(response);
   }

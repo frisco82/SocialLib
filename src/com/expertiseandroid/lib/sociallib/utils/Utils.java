@@ -130,38 +130,31 @@ public class Utils {
   }
 
   /**
-   * Generates a flat XML structure
-   * @param params a map where the key is the tag, and the value its value
+   * Generates a multilevel XML structure
+   * @param params a map where the key is the tag, and the value its value (if the value is another map then it is nested under the key value)
    * @return an XML string
    */
-  public static String generateXML(Map<String,String> params){
+  public static String generateXML(Map<String,Object> params){
     StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    for(Iterator<String> it = params.keySet().iterator(); it.hasNext();){
-      String key = it.next();
-      sb.append('<').append(key).append('>');
-      sb.append(params.get(key));
-      sb.append("</").append(key).append('>');
-    }
+    internalGenerateXML(sb, params);
     return sb.toString();
   }
-
-  /**
-   * Generates a flat XML structure with a root node
-   * @param params a map where the key is the tag, and the value its value
-   * @param rootNode the name of the root node
-   * @return an XML string
-   */
-  public static String generateXML(Map<String,String> params, String rootNode){
-    StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    sb.append('<').append(rootNode).append('>');
-    for(Iterator<String> it = params.keySet().iterator(); it.hasNext();){
-      String key = it.next();
-      sb.append('<').append(key).append('>');
-      sb.append(params.get(key));
-      sb.append("</").append(key).append('>');
-    }
-    sb.append("</").append(rootNode).append('>');
-    return sb.toString();
+  
+  @SuppressWarnings("unchecked")
+	private static String internalGenerateXML(StringBuilder sb,
+			Map<String, Object> params) {
+		for (String key : params.keySet()) {
+			if (params.get(key) instanceof Map) {
+				sb.append('<').append(key).append('>');
+				internalGenerateXML(sb, (Map<String, Object>) params.get(key));
+				sb.append("</").append(key).append('>');
+			} else {
+				sb.append('<').append(key).append('>');
+				sb.append(params.get(key));
+				sb.append("</").append(key).append('>');
+			}
+		}
+		return sb.toString();
   }
 
   /**
