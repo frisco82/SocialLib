@@ -291,9 +291,13 @@ public class TwitterConnector implements PostsSocialNetwork, FollowersSocialNetw
   }
 
 
-  public void requestAuthorization(Activity ctx, DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
-    String authUrl = httpOauthprovider.retrieveRequestToken(httpOauthConsumer, callback);
-    new SocialLibDialog(ctx, authUrl, listener, callback).show();
+  public void requestAuthorization(final Activity ctx, final DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+    final String authUrl = httpOauthprovider.retrieveRequestToken(httpOauthConsumer, callback);
+    ctx.runOnUiThread(new Runnable() {
+        public void run() {
+            new SocialLibDialog(ctx, authUrl, listener, callback).show();
+        }
+    });
   }
 
   public void authorize(String url) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException{

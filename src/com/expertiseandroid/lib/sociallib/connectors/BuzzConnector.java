@@ -159,9 +159,13 @@ public class BuzzConnector implements FollowersSocialNetwork, CommentedPostsSoci
     return false;
   }
 
-  public void requestAuthorization(Activity ctx, DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
-    String authUrl = httpOauthprovider.retrieveRequestToken(httpOauthConsumer, callback);
-    new SocialLibDialog(ctx, authUrl, listener, callback).show();
+  public void requestAuthorization(final Activity ctx, final DialogListener listener) throws OAuthMessageSignerException, OAuthNotAuthorizedException, OAuthExpectationFailedException, OAuthCommunicationException {
+    final String authUrl = httpOauthprovider.retrieveRequestToken(httpOauthConsumer, callback);
+    ctx.runOnUiThread(new Runnable() {
+        public void run() {
+            new SocialLibDialog(ctx, authUrl, listener, callback).show();
+        }
+    });    
   }
 
   public boolean comment(Post post, Post comment) throws FileNotFoundException, MalformedURLException, OAuthMessageSignerException, OAuthExpectationFailedException, OAuthCommunicationException, IOException, NotAuthentifiedException, JSONException {

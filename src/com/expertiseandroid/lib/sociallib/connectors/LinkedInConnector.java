@@ -163,10 +163,14 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
     return reader.readResponse(response);
   }
 
-  public void requestAuthorization(Activity ctx, DialogListener listener) {
+  public void requestAuthorization(final Activity ctx, final DialogListener listener) {
     requestToken = scribe.getRequestToken();
-    String url = AUTHORIZE + requestToken.getToken();
-    new SocialLibDialog(ctx, url, listener, mCallback).show();
+    final String url = AUTHORIZE + requestToken.getToken();
+    ctx.runOnUiThread(new Runnable() {
+        public void run() {
+            new SocialLibDialog(ctx, url, listener, mCallback).show();
+        }
+    });
   }
   
   public List<LinkedInPost> getStatusUpdates(int start, int count) throws NotAuthentifiedException, SAXException, ParserConfigurationException, IOException{
@@ -210,10 +214,10 @@ public class LinkedInConnector implements FriendsSocialNetwork, PostsSocialNetwo
 	    params.put(SHARE, shareParams);
 	    if (content.type == Post.PostType.link) {
 		    Map<String,Object> contentParams = new HashMap<String, Object>();
-	    	shareParams.put(CONTENT, contentParams);
+		    shareParams.put(COMMENT, content.getContents());
+		    shareParams.put(CONTENT, contentParams);
 	    	contentParams.put(TITLE, content.getTitle());
 	    	contentParams.put(LINK, content.getLink());
-	    	contentParams.put(DESCRIPTION, content.getContents());
 	    } else {
 		    shareParams.put(COMMENT, content.getContents());
 	    }
