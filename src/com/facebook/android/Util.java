@@ -129,7 +129,6 @@ public final class Util {
     
     public static HttpResponseWrapper openUrl(String url, String method, Bundle params)
           throws MalformedURLException, IOException {
-        // random string as boundary for multi-part http post
     	if (method.equals("GET")) {
     	  url = url + "?" + encodeUrl(params);
     	}
@@ -160,6 +159,7 @@ public final class Util {
                     reqEntity.addPart(key, body);                    
                 }
         	}
+        	requestTemp.setEntity(reqEntity);
             request = requestTemp;
     	}
         request.setHeader("User-Agent", System.getProperties().
